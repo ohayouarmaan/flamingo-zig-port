@@ -1,5 +1,7 @@
 const std = @import("std");
 
+pub const NumberType = union(enum) { integer: i64, float: f64 };
+
 pub const TokenType = union(enum) {
     LeftCurly,
     RightCurly,
@@ -9,7 +11,8 @@ pub const TokenType = union(enum) {
     RightSquareBrace,
     Minus,
     Plus,
-    Number: u8,
+    Multiply,
+    Number: NumberType,
     String: std.ArrayList(u8),
     pub fn format(self: TokenType, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
@@ -23,7 +26,14 @@ pub const TokenType = union(enum) {
             .RightSquareBrace => try writer.print("]", .{}),
             .Minus => try writer.print("-", .{}),
             .Plus => try writer.print("+", .{}),
-            .Number => |num| try writer.print("NUM({})", .{num}),
+            .Multiply => try writer.print("*", .{}),
+            .Number => |num| {
+                if (num == NumberType.integer) {
+                    try writer.print("integer({})", .{num.integer});
+                } else {
+                    try writer.print("float({})", .{num.float});
+                }
+            },
             .String => |str| try writer.print("STR({})", .{str}),
         }
     }
