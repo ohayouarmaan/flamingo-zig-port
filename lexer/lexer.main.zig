@@ -1,7 +1,7 @@
 const std = @import("std");
 const LexerTypes = @import("./lexer.types.zig");
 
-pub const LexerError = error{ OutOfBoundsAdvance, UnknownNumberParsing };
+pub const LexerError = error{ OutOfBoundsAdvance, UnknownNumberParsing, UnknownStringParsing };
 
 pub const Lexer = struct {
     sourceCode: std.ArrayList(u8),
@@ -37,24 +37,49 @@ pub const Lexer = struct {
             }
             endingIndex = self.currentIndex;
             if (self.advance() == LexerError.OutOfBoundsAdvance) {
-                @panic("Error while parsing number, unexpected end of the file.");
+                return LexerError.UnknownNumberParsing;
             }
         }
         var number: LexerTypes.NumberType = undefined;
         if (dotCount == 1) {
             const value = std.fmt.parseFloat(f64, self.sourceCode.items[startingIndex .. endingIndex + 1]) catch {
-                std.debug.print("{any}", .{self.sourceCode.items[startingIndex .. endingIndex + 1]});
+                // std.debug.print("{any}", .{self.sourceCode.items[startingIndex .. endingIndex + 1]});
                 return LexerError.UnknownNumberParsing;
             };
             number = LexerTypes.NumberType{ .float = value };
         } else {
             const value = std.fmt.parseInt(i64, self.sourceCode.items[startingIndex .. endingIndex + 1], 10) catch {
-                std.debug.print("{s}", .{self.sourceCode.items[startingIndex .. endingIndex + 1]});
+                // std.debug.print("{any}", .{self.sourceCode.items[startingIndex .. endingIndex + 1]});
                 return LexerError.UnknownNumberParsing;
             };
             number = LexerTypes.NumberType{ .integer = value };
         }
         return LexerTypes.TokenType{ .Number = number };
+    }
+
+    fn buildString(self: *Lexer) LexerError!LexerTypes.TokenType {
+        const startingIndex = self.currentIndex;
+        var endingIndex: usize = startingIndex;
+        if (self.advance() == LexerError.OutOfBoundsAdvance) {
+            @panic("Error while lexing.");
+        }
+        while (self.sourceCode.items[self.currentIndex] != '"') {
+            if (self.sourceCode.items[self.currentIndex] == '\\') {
+                if (self.advance() == LexerError.OutOfBoundsAdvance) {
+                    @panic("Error while lexing.");
+                }
+            }
+            if (endingIndex - startingIndex > 45_000) {
+                return LexerError.UnknownStringParsing;
+            }
+            if (self.advance() == LexerError.OutOfBoundsAdvance) {
+                @panic("Error while lexing.");
+            }
+            endingIndex = self.currentIndex;
+        }
+        return LexerTypes.TokenType{
+            .String = self.sourceCode.items[startingIndex .. endingIndex + 1],
+        };
     }
 
     pub fn lex(self: *Lexer, allocator: std.mem.Allocator) LexerError!std.ArrayList(LexerTypes.Token) {
@@ -85,7 +110,12 @@ pub const Lexer = struct {
                     Lexer.appendToken(&tokens, LexerTypes.TokenType.Multiply, currentLine);
                 },
                 '0'...'9' => {
-                    Lexer.appendToken(&tokens, self.buildNumber() catch |e| {
+                    Lexer.appendToken(&tokens, self.buildNumber() catch {
+                        @panic("WTF");
+                    }, currentLine);
+                },
+                '"' => {
+                    Lexer.appendToken(&tokens, self.buildString() catch |e| {
                         std.debug.print("{any}", .{e});
                         @panic("WTF");
                     }, currentLine);

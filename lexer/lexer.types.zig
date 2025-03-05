@@ -13,7 +13,7 @@ pub const TokenType = union(enum) {
     Plus,
     Multiply,
     Number: NumberType,
-    String: std.ArrayList(u8),
+    String: []u8,
     pub fn format(self: TokenType, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
@@ -34,7 +34,7 @@ pub const TokenType = union(enum) {
                     try writer.print("float({})", .{num.float});
                 }
             },
-            .String => |str| try writer.print("STR({})", .{str}),
+            .String => |str| try writer.print("STR({s})", .{str}),
         }
     }
 };
@@ -46,6 +46,8 @@ pub const Token = struct {
     pub fn format(self: Token, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
-        try writer.print("Token({any}, {})", .{ self.tokenType, self.lineNumber });
+        writer.print("Token({any}, {any})", .{ self.tokenType, self.lineNumber }) catch |e| {
+            std.debug.print("{any}", .{e});
+        };
     }
 };
