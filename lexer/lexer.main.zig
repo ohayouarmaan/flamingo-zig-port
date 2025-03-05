@@ -15,8 +15,12 @@ pub const Lexer = struct {
         }
     }
 
-    fn appendToken(tokens: *std.ArrayList(LexerTypes.Token), tokenType: LexerTypes.TokenType, line: usize) void {
-        tokens.*.append(LexerTypes.Token{ .tokenType = tokenType, .lineNumber = line }) catch {
+    fn appendToken(self: Lexer, tokens: *std.ArrayList(LexerTypes.Token), tokenType: LexerTypes.TokenType, line: usize) void {
+        tokens.*.append(LexerTypes.Token{
+            .tokenType = tokenType,
+            .lineNumber = line,
+            .columnNumber = self.currentIndex + 1,
+        }) catch {
             @panic("UNREACHABLE");
         };
     }
@@ -89,36 +93,31 @@ pub const Lexer = struct {
             const currentCharacter = self.sourceCode.items[self.currentIndex];
             switch (currentCharacter) {
                 '{' => {
-                    Lexer.appendToken(&tokens, LexerTypes.TokenType.LeftCurly, currentLine);
+                    self.appendToken(&tokens, LexerTypes.TokenType.LeftCurly, currentLine);
                 },
                 '}' => {
-                    Lexer.appendToken(&tokens, LexerTypes.TokenType.RightCurly, currentLine);
+                    self.appendToken(&tokens, LexerTypes.TokenType.RightCurly, currentLine);
                 },
                 '-' => {
-                    Lexer.appendToken(&tokens, LexerTypes.TokenType.Minus, currentLine);
+                    self.appendToken(&tokens, LexerTypes.TokenType.Minus, currentLine);
                 },
                 '+' => {
-                    Lexer.appendToken(&tokens, LexerTypes.TokenType.Plus, currentLine);
+                    self.appendToken(&tokens, LexerTypes.TokenType.Plus, currentLine);
                 },
                 '(' => {
-                    Lexer.appendToken(&tokens, LexerTypes.TokenType.LeftParen, currentLine);
+                    self.appendToken(&tokens, LexerTypes.TokenType.LeftParen, currentLine);
                 },
                 ')' => {
-                    Lexer.appendToken(&tokens, LexerTypes.TokenType.RightParen, currentLine);
+                    self.appendToken(&tokens, LexerTypes.TokenType.RightParen, currentLine);
                 },
                 '*' => {
-                    Lexer.appendToken(&tokens, LexerTypes.TokenType.Multiply, currentLine);
+                    self.appendToken(&tokens, LexerTypes.TokenType.Multiply, currentLine);
                 },
                 '0'...'9' => {
-                    Lexer.appendToken(&tokens, self.buildNumber() catch {
-                        @panic("WTF");
-                    }, currentLine);
+                    self.appendToken(&tokens, try self.buildNumber(), currentLine);
                 },
                 '"' => {
-                    Lexer.appendToken(&tokens, self.buildString() catch |e| {
-                        std.debug.print("{any}", .{e});
-                        @panic("WTF");
-                    }, currentLine);
+                    self.appendToken(&tokens, try self.buildString(), currentLine);
                 },
                 '\n' => {
                     currentLine += 1;

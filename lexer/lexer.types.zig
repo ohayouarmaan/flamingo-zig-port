@@ -42,11 +42,12 @@ pub const TokenType = union(enum) {
 pub const Token = struct {
     tokenType: TokenType,
     lineNumber: usize,
+    columnNumber: usize,
 
     pub fn format(self: Token, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
-        writer.print("Token({any}, {any})", .{ self.tokenType, self.lineNumber }) catch |e| {
+        writer.print("Token(\'{any}\', {any}:{any})", .{ self.tokenType, self.lineNumber, self.columnNumber }) catch |e| {
             std.debug.print("{any}", .{e});
         };
     }
