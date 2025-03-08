@@ -1,5 +1,7 @@
 const std = @import("std");
 
+pub const Keywords: []const []const u8 = &[_][]const u8{ "if", "else", "proc" };
+
 pub const NumberType = union(enum) { integer: i64, float: f64 };
 
 pub const TokenType = union(enum) {
@@ -13,7 +15,10 @@ pub const TokenType = union(enum) {
     Plus,
     Multiply,
     Number: NumberType,
+    SemiColon,
     String: []u8,
+    Keyword: []u8,
+    Identifier: []u8,
     pub fn format(self: TokenType, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
@@ -27,6 +32,7 @@ pub const TokenType = union(enum) {
             .Minus => try writer.print("-", .{}),
             .Plus => try writer.print("+", .{}),
             .Multiply => try writer.print("*", .{}),
+            .SemiColon => try writer.print(";", .{}),
             .Number => |num| {
                 if (num == NumberType.integer) {
                     try writer.print("integer({})", .{num.integer});
@@ -35,6 +41,8 @@ pub const TokenType = union(enum) {
                 }
             },
             .String => |str| try writer.print("STR({s})", .{str}),
+            .Identifier => |str| try writer.print("indentifier({s})", .{str}),
+            .Keyword => |str| try writer.print("keyword({s})", .{str}),
         }
     }
 };

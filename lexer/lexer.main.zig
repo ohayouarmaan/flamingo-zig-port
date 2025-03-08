@@ -86,10 +86,42 @@ pub const Lexer = struct {
         };
     }
 
+    fn buildIdentifier(self: *Lexer) LexerError!LexerTypes.TokenType {
+        const startingIndex = self.currentIndex;
+        var endingIndex: usize = startingIndex;
+        if (self.advance() == LexerError.OutOfBoundsAdvance) {
+            @panic("Error while lexing.");
+        }
+        while ((self.sourceCode.items[self.currentIndex] >= 'a' and self.sourceCode.items[self.currentIndex] <= 'z') or self.sourceCode.items[self.currentIndex] == '_' or (self.sourceCode.items[self.currentIndex] >= 'A' and self.sourceCode.items[self.currentIndex] <= 'Z')) {
+            if (endingIndex - startingIndex > 45_000) {
+                return LexerError.UnknownStringParsing;
+            }
+            if (self.advance() == LexerError.OutOfBoundsAdvance) {
+                @panic("Error while lexing.");
+            }
+            endingIndex = self.currentIndex;
+        }
+        endingIndex -= 1;
+        self.currentIndex -= 1;
+        for (LexerTypes.Keywords) |keyword| {
+            if (std.mem.eql(u8, keyword, self.sourceCode.items[startingIndex..endingIndex])) {
+                return LexerTypes.TokenType{ .Keyword = self.sourceCode.items[startingIndex .. endingIndex + 1] };
+            }
+        }
+        return LexerTypes.TokenType{ .Identifier = self.sourceCode.items[startingIndex .. endingIndex + 1] };
+    }
+
+    fn match(self: *Lexer, toCheck: u8) bool {
+        if (std.mem.eql(u8, self.sourceCode[self.currentIndex + 1], toCheck)) {
+            return true;
+        }
+        return false;
+    }
+
     pub fn lex(self: *Lexer, allocator: std.mem.Allocator) LexerError!std.ArrayList(LexerTypes.Token) {
         var tokens = std.ArrayList(LexerTypes.Token).init(allocator);
         var currentLine: usize = 1;
-        while (self.advance() != LexerError.OutOfBoundsAdvance) {
+        while (self.currentIndex == 0 or self.advance() != LexerError.OutOfBoundsAdvance) {
             const currentCharacter = self.sourceCode.items[self.currentIndex];
             switch (currentCharacter) {
                 '{' => {
@@ -118,6 +150,9 @@ pub const Lexer = struct {
                 },
                 '"' => {
                     self.appendToken(&tokens, try self.buildString(), currentLine);
+                },
+                'a'...'z', 'A'...'Z', '_' => {
+                    self.appendToken(&tokens, try self.buildIdentifier(), currentLine);
                 },
                 '\n' => {
                     currentLine += 1;
