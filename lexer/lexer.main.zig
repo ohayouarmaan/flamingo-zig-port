@@ -112,7 +112,10 @@ pub const Lexer = struct {
     }
 
     fn match(self: *Lexer, toCheck: u8) bool {
-        if (std.mem.eql(u8, self.sourceCode[self.currentIndex + 1], toCheck)) {
+        if (self.sourceCode.items[self.currentIndex + 1] == toCheck) {
+            if (self.advance() == LexerError.OutOfBoundsAdvance) {
+                @panic("Error while lexing.");
+            }
             return true;
         }
         return false;
@@ -131,10 +134,18 @@ pub const Lexer = struct {
                     self.appendToken(&tokens, LexerTypes.TokenType.RightCurly, currentLine);
                 },
                 '-' => {
-                    self.appendToken(&tokens, LexerTypes.TokenType.Minus, currentLine);
+                    if (self.match('-')) {
+                        self.appendToken(&tokens, LexerTypes.TokenType.MinusMinus, currentLine);
+                    } else {
+                        self.appendToken(&tokens, LexerTypes.TokenType.Minus, currentLine);
+                    }
                 },
                 '+' => {
-                    self.appendToken(&tokens, LexerTypes.TokenType.Plus, currentLine);
+                    if (self.match('+')) {
+                        self.appendToken(&tokens, LexerTypes.TokenType.PlusPlus, currentLine);
+                    } else {
+                        self.appendToken(&tokens, LexerTypes.TokenType.Plus, currentLine);
+                    }
                 },
                 '(' => {
                     self.appendToken(&tokens, LexerTypes.TokenType.LeftParen, currentLine);
@@ -143,7 +154,11 @@ pub const Lexer = struct {
                     self.appendToken(&tokens, LexerTypes.TokenType.RightParen, currentLine);
                 },
                 '*' => {
-                    self.appendToken(&tokens, LexerTypes.TokenType.Multiply, currentLine);
+                    if (self.match('*')) {
+                        self.appendToken(&tokens, LexerTypes.TokenType.MultiplyMultiply, currentLine);
+                    } else {
+                        self.appendToken(&tokens, LexerTypes.TokenType.Multiply, currentLine);
+                    }
                 },
                 '0'...'9' => {
                     self.appendToken(&tokens, try self.buildNumber(), currentLine);
