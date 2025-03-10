@@ -17,6 +17,11 @@ pub const TokenType = union(enum) {
     PlusPlus,
     Multiply,
     MultiplyMultiply,
+    Divide,
+    Equals,
+    EqualsEquals,
+    Exclamation,
+    ExclamationEquals,
     Number: NumberType,
     SemiColon,
     String: []u8,
@@ -38,6 +43,11 @@ pub const TokenType = union(enum) {
             .PlusPlus => try writer.print("++", .{}),
             .Multiply => try writer.print("*", .{}),
             .MultiplyMultiply => try writer.print("**", .{}),
+            .Divide => try writer.print("/", .{}),
+            .Equals => try writer.print("=", .{}),
+            .EqualsEquals => try writer.print("==", .{}),
+            .Exclamation => try writer.print("!", .{}),
+            .ExclamationEquals => try writer.print("!=", .{}),
             .SemiColon => try writer.print(";", .{}),
             .Number => |num| {
                 if (num == NumberType.integer) {

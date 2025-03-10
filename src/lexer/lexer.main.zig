@@ -47,13 +47,11 @@ pub const Lexer = struct {
         var number: LexerTypes.NumberType = undefined;
         if (dotCount == 1) {
             const value = std.fmt.parseFloat(f64, self.sourceCode.items[startingIndex .. endingIndex + 1]) catch {
-                // std.debug.print("{any}", .{self.sourceCode.items[startingIndex .. endingIndex + 1]});
                 return LexerError.UnknownNumberParsing;
             };
             number = LexerTypes.NumberType{ .float = value };
         } else {
             const value = std.fmt.parseInt(i64, self.sourceCode.items[startingIndex .. endingIndex + 1], 10) catch {
-                // std.debug.print("{any}", .{self.sourceCode.items[startingIndex .. endingIndex + 1]});
                 return LexerError.UnknownNumberParsing;
             };
             number = LexerTypes.NumberType{ .integer = value };
@@ -158,6 +156,20 @@ pub const Lexer = struct {
                         self.appendToken(&tokens, LexerTypes.TokenType.MultiplyMultiply, currentLine);
                     } else {
                         self.appendToken(&tokens, LexerTypes.TokenType.Multiply, currentLine);
+                    }
+                },
+                '=' => {
+                    if (self.match('=')) {
+                        self.appendToken(&tokens, LexerTypes.TokenType.EqualsEquals, currentLine);
+                    } else {
+                        self.appendToken(&tokens, LexerTypes.TokenType.Equals, currentLine);
+                    }
+                },
+                '!' => {
+                    if (self.match('=')) {
+                        self.appendToken(&tokens, LexerTypes.TokenType.ExclamationEquals, currentLine);
+                    } else {
+                        self.appendToken(&tokens, LexerTypes.TokenType.Exclamation, currentLine);
                     }
                 },
                 '0'...'9' => {
