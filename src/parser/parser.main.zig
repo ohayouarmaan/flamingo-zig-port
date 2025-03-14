@@ -123,9 +123,4 @@ pub const Parser = struct {
             },
         }
     }
-
-    pub fn deinit(self: *Parser) void {
-        self.program.deinit(self.allocator);
-        // self.allocator.destroy(&self.program);
-    }
 };

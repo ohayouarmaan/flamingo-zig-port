@@ -51,9 +51,9 @@ pub const TokenType = union(enum) {
             .SemiColon => try writer.print(";", .{}),
             .Number => |num| {
                 if (num == NumberType.integer) {
-                    try writer.print("integer({})", .{num.integer});
+                    try writer.print("{}", .{num.integer});
                 } else {
-                    try writer.print("float({})", .{num.float});
+                    try writer.print("{}", .{num.float});
                 }
             },
             .String => |str| try writer.print("STR({s})", .{str}),
@@ -71,7 +71,7 @@ pub const Token = struct {
     pub fn format(self: Token, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
-        writer.print("Token(\'{any}\', {any}:{any})", .{ self.tokenType, self.lineNumber, self.columnNumber }) catch |e| {
+        writer.print("(\'{any}\', {any}:{any})", .{ self.tokenType, self.lineNumber, self.columnNumber }) catch |e| {
             std.debug.print("{any}", .{e});
         };
     }
